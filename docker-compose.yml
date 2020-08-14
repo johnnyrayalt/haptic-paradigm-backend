@@ -1,0 +1,23 @@
+version: "3"
+services:
+    backend:
+        container_name: esbackend
+        build:
+            context: esbackend
+            dockerfile: Dockerfile
+        image: chloealxandra/esbackend
+        ports:
+            - "8000:8000"
+        volumes:
+            - ./esbackend:/usr/
+
+    frontend:
+        container_name: esfrontend
+        build:
+            context: esfrontend
+            dockerfile: Dockerfile
+        image: chloealxandra/esfrontend
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./esfrontend:/usr/
