@@ -1,16 +1,19 @@
 import cors from 'cors';
 import express from 'express';
 import fs from 'fs';
-import { createServer, Server } from 'http';
-import moment from 'moment';
+import { createServer, Server } from 'https';
 import socketio from 'socket.io';
-import { OSCEvent } from './constants';
-import { MaxMspServer } from './MaxMspServer';
-import { OSCMessage } from './types';
+import { CLIENT_SERVER, MESSAGE, PING_INTERVAL, PING_TIMEOUT, SLIDER_ONE, SLIDER_TWO } from '../utils/constants';
+import { Logger } from '../utils/Logger';
+import { OSCMessage } from '../utils/types';
+import { CONNECT, DISCONNECT } from './../utils/constants';
+import { RemoteServer } from './RemoteServer';
+require('dotenv').config();
 
 export class ClientServer {
 	private readonly CLIENT_PORT: string | number = process.env.PORT || 8000;
-	private maxMspServer: MaxMspServer;
+	private serverOpts = {};
+	private remoteServer: RemoteServer;
 
 	private clientApp: express.Application;
 	private clientServer: Server;
@@ -25,53 +28,65 @@ export class ClientServer {
 	private timeout: any;
 	private timeUntilDisconnect: number = 180 * 1000;
 
-	constructor(maxMspServer: MaxMspServer) {
-		this.maxMspServer = maxMspServer;
+	private logger: Logger = new Logger(CLIENT_SERVER);
+
+	constructor(remoteServer: RemoteServer) {
+		this.checkNodeEnv();
+		this.remoteServer = remoteServer;
 
 		this.clientApp = express();
 		this.clientPort = this.CLIENT_PORT;
 		this.clientApp.use(cors);
 		this.clientApp.options('*', cors());
-		this.clientServer = createServer(this.clientApp);
+		this.clientServer = createServer(this.serverOpts, this.clientApp);
 
-		this.frequencyState = { address: '/slider/frequency', args: [{ type: 'f', value: 50 }] };
-		this.amplitudeState = { address: '/slider/amplitude', args: [{ type: 'a', value: 50 }] };
+		this.frequencyState = { address: SLIDER_ONE.address, args: [{ type: SLIDER_ONE.type, value: 50 }] };
+		this.amplitudeState = { address: SLIDER_TWO.address, args: [{ type: SLIDER_TWO.type, value: 50 }] };
 
 		this.initSocket();
 		this.listenForClient();
 		this.handleSocketConnections();
 	}
 
+	private checkNodeEnv() {
+		if (process.env.NODE_ENV !== 'development')
+			this.serverOpts = {
+				key: fs.readFileSync(process.env.PATH_TO_SSL_KEY),
+				cert: fs.readFileSync(process.env.PATH_TO_SSL_CER),
+			};
+	}
+
 	private initSocket(): void {
-		this.clientIO = socketio(this.clientServer, { pingInterval: 1000, pingTimeout: 10000 });
+		this.clientIO = socketio(this.clientServer, { pingInterval: PING_INTERVAL, pingTimeout: PING_TIMEOUT });
 	}
 
 	private listenForClient(): void {
 		this.clientServer.listen(this.clientPort, () => {
-			console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | ------------------`);
-			console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | Running server on port ${this.clientPort}`);
-			console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | ------------------`);
+			this.logger.broadcast({ lineBreak: true });
+			this.logger.broadcast({ message: `Running server on port ${this.clientPort}` });
+			this.logger.broadcast({ lineBreak: true });
 		});
 	}
 
 	private restartServer(): void {
 		this.clientIO.removeAllListeners();
+
+		// reset state
 		this.controlling = '';
 		this.connectedClients = [];
+
 		this.clientServer.close();
 		this.listenForClient();
 		this.handleSocketConnections();
 	}
 
 	private handleSocketConnections(): void {
-		this.clientIO.on('connect', (socket: SocketIO.Socket): void => {
-			console.log(
-				`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | Connected client with ID { ${socket.conn.id} } on port ${
-					this.clientPort
-				}`,
-			);
+		this.clientIO.on(CONNECT, (socket: SocketIO.Socket): void => {
+			this.logger.broadcast({
+				message: `Connected client with ID { ${socket.conn.id} } on port ${this.clientPort}`,
+			});
 
-			socket.emit('connectedToServer', '[SERVER]: Connected ٩(｡•́‿•̀｡)۶');
+			socket.emit('connectedToServer', '[CLIENT SERVER]: Connected ٩(｡•́‿•̀｡)۶');
 
 			this.connectedClients.push(socket.conn.id);
 
@@ -80,7 +95,7 @@ export class ClientServer {
 			if (this.controlling === '') {
 				this.controlling = this.connectedClients[0];
 
-				console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | Now in control: { ${this.controlling} }`);
+				this.logger.broadcast({ message: `Now in control: { ${this.controlling} }` });
 
 				if (!this.timeout) {
 					this.clientIO.to(this.controlling).emit('controlling', [this.frequencyState, this.amplitudeState]);
@@ -95,6 +110,7 @@ export class ClientServer {
 
 	private startTimer() {
 		clearTimeout(this.timeout);
+
 		this.timeout = setTimeout(() => {
 			this.disconnectingClient();
 		}, this.timeUntilDisconnect);
@@ -106,43 +122,42 @@ export class ClientServer {
 	}
 
 	private receiveMessage(socket: SocketIO.Socket): void {
-		socket.on(OSCEvent.MESSAGE, (message: OSCMessage) => {
-			console.log(
-				`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | Message received: ${JSON.stringify(message, null, 4)}`,
-			);
-			console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | ------------------`);
+		socket.on(MESSAGE, (message: OSCMessage) => {
+			this.logger.broadcast({ message: `Message received: ${JSON.stringify(message, null, 4)}` });
+			this.logger.broadcast({ lineBreak: true });
 
 			switch (message.address) {
-				case '/slider/frequency':
+				case SLIDER_ONE.address:
 					this.frequencyState = message;
-				case '/slider/amplitude':
+				case SLIDER_TWO.address:
 					this.amplitudeState = message;
 			}
 
-			const sendMessage = {
+			const messageToSend: OSCMessage = {
 				address: message.address,
 				args: message.args,
 			};
 
-			this.maxMspServer.maxMspIO.emit('message', sendMessage);
-			this.broadcastMessage(sendMessage, socket);
+			this.remoteServer.broadcastMessage(MESSAGE, messageToSend);
+
+			this.broadcastMessage(messageToSend, socket);
 		});
 	}
 
 	private broadcastMessage(message: OSCMessage, socket: SocketIO.Socket): void {
-		console.log(
-			`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | Broadcasting message: ${JSON.stringify(message, null, 4)}`,
-		);
-		console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | ------------------`);
+		this.logger.broadcast({ message: `Broadcasting message: ${JSON.stringify(message, null, 4)}` });
+		this.logger.broadcast({ lineBreak: true });
 
 		socket.broadcast.emit('broadcastMessage', message);
 	}
 
 	private controllerStartTimer(socket: SocketIO.Socket): void {
 		socket.on('controllerTimerStart', () => {
-			console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | STARTING CONNECTION TIMER`);
-			console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | ------------------`);
+			this.logger.broadcast({ message: `STARTING CONNECTION TIMER` });
+			this.logger.broadcast({ lineBreak: true });
+
 			this.startTimer();
+
 			socket.emit('startingTimer', 'Timer has started');
 		});
 	}
@@ -152,31 +167,31 @@ export class ClientServer {
 	}
 
 	private disconnect(socket: SocketIO.Socket) {
-		socket.on('disconnect', () => {
-			console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | Disconnecting Client { ${socket.conn.id} }`);
+		socket.on(DISCONNECT, () => {
+			this.logger.broadcast({ message: `Disconnecting Client { ${socket.conn.id} }` });
 
 			if (this.controlling === socket.conn.id) {
-				console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | STOPPING TIMER`);
-				console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | ------------------`);
+				this.logger.broadcast({ message: `STOPPING TIMER` });
+				this.logger.broadcast({ lineBreak: true });
 
 				this.stopTimer();
 
 				this.connectedClients.splice(0, 1);
 				this.controlling = this.connectedClients[0];
 
-				console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | Now in control: { ${this.controlling} }`);
+				this.logger.broadcast({ message: `Now in control: { ${this.controlling} }` });
 
 				this.clientIO.to(this.controlling).emit('controlling', [this.frequencyState, this.amplitudeState]);
 
 				if (this.controlling === undefined) {
-					console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | RESTARTING`);
-					console.log(`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | ------------------`);
+					this.logger.broadcast({ message: `RESTARTING` });
+					this.logger.broadcast({ lineBreak: true });
+
 					this.restartServer();
 				}
 			} else {
-				console.log(
-					`[SERVER]: ${moment().format('MM/DD/YY, h:mm:ss a')} | removing client { ${socket.conn.id} } fron queue`,
-				);
+				this.logger.broadcast({ message: `removing client { ${socket.conn.id} } fron queue` });
+
 				this.connectedClients = this.connectedClients.filter((client: string) => client !== socket.conn.id);
 				this.controlling = this.connectedClients[0];
 			}
