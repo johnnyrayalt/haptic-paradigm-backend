@@ -7,7 +7,9 @@
         "postinstall": "npm run build",
         "start:dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
         "start": "CLIENT_PORT=8000 REMOTE_PORT=8001 node dist/server.js",
-        "docker:build": "docker build -t chloealxandra/esbackend ."
+        "docker:build": "docker build -t chloealxandra/esbackend .",
+        "docker:run": "docker run -p 8000:8000 -d chloealxandra/esbackend",
+        "docker": "npm run docker:build && npm run docker:run"
     },
     "author": "",
     "license": "ISC",
