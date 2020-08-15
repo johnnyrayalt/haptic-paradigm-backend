@@ -1,6 +1,6 @@
 import cors from 'cors';
 import express from 'express';
-import fs from 'fs';
+// import fs from 'fs';
 import { createServer, Server } from 'http';
 import socketio from 'socket.io';
 import { CLIENT_SERVER, MESSAGE, PING_INTERVAL, PING_TIMEOUT, SLIDER_ONE, SLIDER_TWO } from '../utils/constants';
@@ -8,10 +8,10 @@ import { Logger } from '../utils/Logger';
 import { OSCMessage } from '../utils/types';
 import { CONNECT, DISCONNECT } from './../utils/constants';
 import { RemoteServer } from './RemoteServer';
-require('dotenv').config();
+// require('dotenv').config();
 
 export class ClientServer {
-	private readonly CLIENT_PORT: string | number = process.env.PORT || 8000;
+	private readonly CLIENT_PORT: string | number = process.env.CLIENT_PORT || 8000;
 	private serverOpts = {};
 	private remoteServer: RemoteServer;
 

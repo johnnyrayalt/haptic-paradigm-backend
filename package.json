@@ -5,8 +5,8 @@
     "scripts": {
         "build": "rimraf dist && tsc",
         "postinstall": "npm run build",
-        "start:dev": "NODE_ENV=development ts-node-dev --respawn --transpileOnly ./src/server.ts",
-        "start": "CLIENT_PORT=8000 MAXMSP_PORT=8001 node dist/server.js",
+        "start:dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
+        "start": "CLIENT_PORT=8000 REMOTE_PORT=8001 node dist/server.js",
         "docker:build": "docker build -t chloealxandra/esbackend ."
     },
     "author": "",
@@ -33,7 +33,7 @@
     "devDependencies": {
         "@types/express": "^4.17.6",
         "prettier": "^2.0.5",
-        "ts-node-dev": "^1.0.0-pre.44",
+        "ts-node-dev": "^1.0.0-pre.57",
         "tslint": "^6.1.2"
     }
 }

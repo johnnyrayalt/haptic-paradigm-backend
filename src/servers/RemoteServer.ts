@@ -8,7 +8,7 @@ import { OSCMessage } from '../utils/types';
 import { CONNECT, DISCONNECT } from './../utils/constants';
 
 export class RemoteServer {
-	private readonly REMOTE_PORT: string | number = process.env.PORT || 8001;
+	private readonly REMOTE_PORT: string | number = process.env.REMOTE_PORT || 8001;
 
 	private remoteApp: express.Application;
 	private remoteServer: Server;
