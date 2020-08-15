@@ -9,7 +9,8 @@ COPY package*.json /usr/src/app/
 RUN npm install
 
 # Bundle app source
-COPY . /usr/src/app
+COPY . . 
+RUN npm run build
 
-EXPOSE 3000
+EXPOSE 8000
 CMD [ "npm", "start" ]
