@@ -1,9 +1,8 @@
-import { ClientServer } from './ClientServer';
-import { MaxMspServer } from './MaxMspServer';
-import { OSCMessage } from './types';
+import { ClientServer } from './servers/ClientServer';
+import { RemoteServer } from './servers/RemoteServer';
 
-const maxMspServer = new MaxMspServer();
+const remoteServer = new RemoteServer();
 
-const everySeekerApp = new ClientServer(maxMspServer);
+const hapticParadigmApp = new ClientServer(remoteServer);
 
-export { everySeekerApp };
+export { hapticParadigmApp };
