@@ -9,7 +9,7 @@ services:
         ports:
             - "8000:8000"
         volumes:
-            - ./esbackend:/usr/
+            - ./esbackend:/usr/scr/app
 
     frontend:
         container_name: esfrontend
@@ -20,4 +20,4 @@ services:
         ports:
             - "3000:3000"
         volumes:
-            - ./esfrontend:/usr/
+            - ./esfrontend:/usr/src/app
