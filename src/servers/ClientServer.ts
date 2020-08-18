@@ -1,14 +1,15 @@
 import cors from 'cors';
 import express from 'express';
-// import fs from 'fs';
+import fs from 'fs';
 import { createServer, Server } from 'http';
 import socketio from 'socket.io';
 import { CLIENT_SERVER, MESSAGE, PING_INTERVAL, PING_TIMEOUT, SLIDER_ONE, SLIDER_TWO } from '../utils/constants';
+import Decrypt from '../utils/Decrypt';
 import { Logger } from '../utils/Logger';
 import { OSCMessage } from '../utils/types';
 import { CONNECT, DISCONNECT } from './../utils/constants';
 import { RemoteServer } from './RemoteServer';
-// require('dotenv').config();
+require('dotenv').config();
 
 export class ClientServer {
 	private readonly CLIENT_PORT: string | number = process.env.CLIENT_PORT || 8000;
@@ -31,7 +32,7 @@ export class ClientServer {
 	private logger: Logger = new Logger(CLIENT_SERVER);
 
 	constructor(remoteServer: RemoteServer) {
-		// this.checkNodeEnv();
+		this.checkNodeEnv();
 		this.remoteServer = remoteServer;
 
 		this.clientApp = express();
@@ -48,13 +49,13 @@ export class ClientServer {
 		this.handleSocketConnections();
 	}
 
-	// private checkNodeEnv() {
-	// 	if (process.env.NODE_ENV !== 'development')
-	// 		this.serverOpts = {
-	// 			key: fs.readFileSync(process.env.PATH_TO_SSL_KEY),
-	// 			cert: fs.readFileSync(process.env.PATH_TO_SSL_CER),
-	// 		};
-	// }
+	private checkNodeEnv() {
+		if (process.env.NODE_ENV !== 'development')
+			this.serverOpts = {
+				key: Decrypt.for(process.env.SSL_KEY),
+				cert: Decrypt.for(process.env.SSL_CERT),
+			};
+	}
 
 	private initSocket(): void {
 		this.clientIO = socketio(this.clientServer, { pingInterval: PING_INTERVAL, pingTimeout: PING_TIMEOUT });
