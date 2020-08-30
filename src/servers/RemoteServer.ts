@@ -5,17 +5,18 @@ import moment from 'moment';
 import socketio from 'socket.io';
 import { Logger } from '../utils/Logger';
 import { OSCMessage } from '../utils/types';
-import { CONNECT, DISCONNECT } from './../utils/constants';
+import { CONNECT, DISCONNECT, REMOTE_SERVER } from './../utils/constants';
 
 export class RemoteServer {
+	public remoteIO: SocketIO.Server;
+
 	private readonly REMOTE_PORT: string | number = process.env.REMOTE_PORT || 8001;
 
 	private remoteApp: express.Application;
 	private remoteServer: Server;
-	public remoteIO: SocketIO.Server;
 	private remotePort: string | number;
 
-	private logger: Logger = new Logger('remote');
+	private logger: Logger = new Logger(REMOTE_SERVER);
 
 	constructor() {
 		this.remoteApp = express();
