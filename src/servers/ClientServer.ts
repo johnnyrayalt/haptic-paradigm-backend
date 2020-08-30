@@ -1,15 +1,12 @@
 import cors from 'cors';
 import express from 'express';
-import fs from 'fs';
-import { createServer, Server } from 'https';
+import { createServer, Server } from 'http';
 import socketio from 'socket.io';
-import { CLIENT_SERVER, MESSAGE, PING_INTERVAL, PING_TIMEOUT, SLIDER_ONE, SLIDER_TWO } from '../utils/constants';
-import Decrypt from '../utils/Decrypt';
+import { CLIENT_SERVER, CONNECT, DISCONNECT, MESSAGE, PING_INTERVAL, PING_TIMEOUT, SLIDER } from '../utils/constants';
 import { Logger } from '../utils/Logger';
 import { OSCMessage } from '../utils/types';
-import { CONNECT, DISCONNECT } from './../utils/constants';
+import { SLIDER_DATA } from './../utils/constants';
 import { RemoteServer } from './RemoteServer';
-require('dotenv').config();
 
 export class ClientServer {
 	private readonly CLIENT_PORT: string | number = process.env.CLIENT_PORT || 8000;
@@ -20,8 +17,7 @@ export class ClientServer {
 	private clientIO: SocketIO.Server;
 	private clientPort: string | number;
 
-	private frequencyState: OSCMessage;
-	private amplitudeState: OSCMessage;
+	private sliderState: { [name: string]: OSCMessage } = {};
 
 	private controlling: string = '';
 	private connectedClients: any = [];
@@ -31,8 +27,8 @@ export class ClientServer {
 	private logger: Logger = new Logger(CLIENT_SERVER);
 
 	constructor(remoteServer: RemoteServer) {
-		this.frequencyState = { address: SLIDER_ONE.address, args: [{ type: SLIDER_ONE.type, value: 50 }] };
-		this.amplitudeState = { address: SLIDER_TWO.address, args: [{ type: SLIDER_TWO.type, value: 50 }] };
+		// write slider init function
+		this.initSliders();
 
 		this.remoteServer = remoteServer;
 
@@ -48,18 +44,16 @@ export class ClientServer {
 		this.handleSocketConnections();
 	}
 
+	private initSliders(): void {
+		SLIDER_DATA.forEach((data) => {
+			this.sliderState = {
+				[data.address]: SLIDER(data.address, data.value),
+			};
+		});
+	}
+
 	private initServer(): void {
-		if (process.env.NODE_ENV !== 'development') {
-			this.clientServer = createServer(
-				{
-					key: Decrypt.for(process.env.SSL_KEY),
-					cert: Decrypt.for(process.env.SSL_CERT),
-				},
-				this.clientApp,
-			);
-		} else {
-			this.clientServer = createServer(this.clientApp);
-		}
+		this.clientServer = createServer(this.clientApp);
 	}
 
 	private initSocket(): void {
@@ -96,7 +90,8 @@ export class ClientServer {
 
 			this.connectedClients.push(socket.conn.id);
 
-			this.clientIO.to(socket.conn.id).emit('initialState', [this.frequencyState, this.amplitudeState]);
+			const outBoundData: OSCMessage[] = this.assembleOutBoundData();
+			this.clientIO.to(socket.conn.id).emit('initialState', outBoundData);
 
 			if (this.controlling === '') {
 				this.controlling = this.connectedClients[0];
@@ -104,7 +99,8 @@ export class ClientServer {
 				this.logger.broadcast({ message: `Now in control: { ${this.controlling} }` });
 
 				if (!this.timeout) {
-					this.clientIO.to(this.controlling).emit('controlling', [this.frequencyState, this.amplitudeState]);
+					const outBoundData: OSCMessage[] = this.assembleOutBoundData();
+					this.clientIO.to(this.controlling).emit('controlling', outBoundData);
 				}
 			}
 
@@ -132,11 +128,10 @@ export class ClientServer {
 			this.logger.broadcast({ message: `Message received: ${JSON.stringify(message, null, 4)}` });
 			this.logger.broadcast({ lineBreak: true });
 
-			switch (message.address) {
-				case SLIDER_ONE.address:
-					this.frequencyState = message;
-				case SLIDER_TWO.address:
-					this.amplitudeState = message;
+			for (const slider in this.sliderState) {
+				if (message.address === slider) {
+					this.sliderState[slider] = message;
+				}
 			}
 
 			const messageToSend: OSCMessage = {
@@ -155,6 +150,13 @@ export class ClientServer {
 		this.logger.broadcast({ lineBreak: true });
 
 		socket.broadcast.emit('broadcastMessage', message);
+	}
+
+	private assembleOutBoundData(): OSCMessage[] {
+		const outBoundData: OSCMessage[] = [];
+		Object.keys(this.sliderState).forEach((slider: string) => outBoundData.push(this.sliderState[slider]));
+
+		return outBoundData;
 	}
 
 	private controllerStartTimer(socket: SocketIO.Socket): void {
@@ -187,7 +189,8 @@ export class ClientServer {
 
 				this.logger.broadcast({ message: `Now in control: { ${this.controlling} }` });
 
-				this.clientIO.to(this.controlling).emit('controlling', [this.frequencyState, this.amplitudeState]);
+				const outBoundData: OSCMessage[] = this.assembleOutBoundData();
+				this.clientIO.to(this.controlling).emit('controlling', outBoundData);
 
 				if (this.controlling === undefined) {
 					this.logger.broadcast({ message: `RESTARTING` });
