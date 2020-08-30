@@ -1,4 +1,4 @@
-import { SliderOptions } from './types';
+import { OSCMessage } from './types';
 
 // Socket Events
 export const CONNECT: string = 'connect';
@@ -14,6 +14,28 @@ export const PING_INTERVAL: number = 1000;
 export const PING_TIMEOUT: number = 10000;
 
 // Sliders
-const SLIDER: string = '/slider';
-export const SLIDER_ONE: SliderOptions = { address: `${SLIDER}/frequency`, type: 'f' };
-export const SLIDER_TWO: SliderOptions = { address: `${SLIDER}/amplitude`, type: 'a' };
+const SLIDER_NAME: string = 'cube';
+export const SLIDER = (address: string, value: number, name: string = SLIDER_NAME): OSCMessage => ({
+	address: `/${name}/${address}`,
+	args: [
+		{
+			type: address,
+			value: value,
+		},
+	],
+});
+
+export const SLIDER_DATA = [
+	{
+		address: 'x',
+		value: 50,
+	},
+	{
+		address: 'y',
+		value: 50,
+	},
+	{
+		address: 'z',
+		value: 50,
+	},
+];
