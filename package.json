@@ -4,7 +4,6 @@
     "description": "Haptic Paradigm Relay Server",
     "scripts": {
         "build": "rimraf dist && tsc",
-        "postinstall": "npm run build",
         "start:dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only ./src/server.ts",
         "start": "CLIENT_PORT=8000 REMOTE_PORT=8001 node dist/server.js",
         "docker:build": "docker build -t chloealxandra/esbackend .",
