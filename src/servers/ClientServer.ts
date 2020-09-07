@@ -2,7 +2,16 @@ import cors from 'cors';
 import express from 'express';
 import { createServer, Server } from 'http';
 import socketio from 'socket.io';
-import { CLIENT_SERVER, CONNECT, DISCONNECT, MESSAGE, PING_INTERVAL, PING_TIMEOUT, SLIDER } from '../utils/constants';
+import {
+	CLIENT_SERVER,
+	CONNECT,
+	DISCONNECT,
+	MESSAGE,
+	PING_INTERVAL,
+	PING_TIMEOUT,
+	SLIDER,
+	TIME_LIMIT,
+} from '../utils/constants';
 import { Logger } from '../utils/Logger';
 import { OSCMessage } from '../utils/types';
 import { SLIDER_DATA } from './../utils/constants';
@@ -22,12 +31,11 @@ export class ClientServer {
 	private controlling: string = '';
 	private connectedClients: any = [];
 	private timeout: any;
-	private timeUntilDisconnect: number = 180 * 1000;
+	private timeUntilDisconnect: number = TIME_LIMIT * 1000;
 
 	private logger: Logger = new Logger(CLIENT_SERVER);
 
 	constructor(remoteServer: RemoteServer) {
-		// write slider init function
 		this.initSliders();
 
 		this.remoteServer = remoteServer;

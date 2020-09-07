@@ -13,6 +13,9 @@ export const CLIENT_SERVER: string = 'client';
 export const PING_INTERVAL: number = 1000;
 export const PING_TIMEOUT: number = 10000;
 
+// Time limit in seconds
+export const TIME_LIMIT: number = 60;
+
 // Sliders
 const SLIDER_NAME: string = 'cube';
 export const SLIDER = (address: string, value: number, name: string = SLIDER_NAME): OSCMessage => ({
