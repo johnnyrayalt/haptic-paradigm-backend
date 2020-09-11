@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
-import { createServer, Server } from 'http';
+import fs from 'fs';
+import { createServer, Server } from 'https';
 import socketio from 'socket.io';
 import {
 	CLIENT_SERVER,
@@ -61,7 +62,13 @@ export class ClientServer {
 	}
 
 	private initServer(): void {
-		this.clientServer = createServer(this.clientApp);
+		this.clientServer = createServer(
+			{
+				key: fs.readFileSync('/home/johnny/.acme.sh/livelyservingitup.site/livelyservingitup.site.key'),
+				cert: fs.readFileSync('/home/johnny/.acme.sh/livelyservingitup.site/livelyservingitup.site.cer'),
+			},
+			this.clientApp,
+		);
 	}
 
 	private initSocket(): void {
