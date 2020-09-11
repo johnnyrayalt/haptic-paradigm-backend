@@ -73,7 +73,6 @@ export class ClientServer {
 
 	private initSocket(): void {
 		this.clientIO = socketio(this.clientServer, {
-			path: '/socket/socket.io',
 			pingInterval: PING_INTERVAL,
 			pingTimeout: PING_TIMEOUT,
 		});
