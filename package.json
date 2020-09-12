@@ -24,6 +24,7 @@
         "express": "4.17.1",
         "express-session": "1.17.1",
         "http": "0.0.1-security",
+        "https": "^1.0.0",
         "moment": "2.27.0",
         "node-osc": "5.1.0",
         "nodemon": "2.0.4",
