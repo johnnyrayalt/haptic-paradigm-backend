@@ -40,7 +40,7 @@ export class RemoteServer {
 		if (process.env.NODE_ENV === 'development') {
 			this.remoteServer = ImportServer.http(this.remoteApp);
 		} else {
-			this.remoteServer = ImportServer.https(this.remoteApp, false);
+			this.remoteServer = ImportServer.https(this.remoteApp);
 		}
 	}
 

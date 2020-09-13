@@ -65,7 +65,7 @@ export class ClientServer {
 		if (process.env.NODE_ENV === 'development') {
 			this.clientServer = ImportServer.http(this.clientApp);
 		} else {
-			this.clientServer = ImportServer.https(this.clientApp, true);
+			this.clientServer = ImportServer.https(this.clientApp);
 		}
 	}
 
