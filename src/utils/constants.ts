@@ -14,7 +14,7 @@ export const PING_INTERVAL: number = 1000;
 export const PING_TIMEOUT: number = 10000;
 
 // Time limit in seconds
-export const TIME_LIMIT: number = 60;
+export const TIME_LIMIT: number = 90;
 
 // Sliders
 const SLIDER_NAME: string = 'cube';
