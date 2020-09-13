@@ -37,11 +37,7 @@ export class RemoteServer {
 	}
 
 	private initServer(): void {
-		if (process.env.NODE_ENV === 'development') {
-			this.remoteServer = ImportServer.http(this.remoteApp);
-		} else {
-			this.remoteServer = ImportServer.https(this.remoteApp);
-		}
+		this.remoteServer = ImportServer.http(this.remoteApp);
 	}
 
 	private initSocket(): void {
