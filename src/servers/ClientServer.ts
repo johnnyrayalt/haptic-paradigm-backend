@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express from 'express';
-import fs from 'fs';
-// import { createServer, Server } from 'https';
+import * as HttpServer from 'http';
+import * as HttpsServer from 'https';
 import socketio from 'socket.io';
 import {
 	CLIENT_SERVER,
@@ -13,6 +13,7 @@ import {
 	SLIDER,
 	TIME_LIMIT,
 } from '../utils/constants';
+import ImportServer from '../utils/ImportServer';
 import { Logger } from '../utils/Logger';
 import { OSCMessage } from '../utils/types';
 import { SLIDER_DATA } from './../utils/constants';
@@ -21,10 +22,9 @@ import { RemoteServer } from './RemoteServer';
 export class ClientServer {
 	private readonly CLIENT_PORT: string | number = process.env.CLIENT_PORT || 8000;
 	private remoteServer: RemoteServer;
-	private createServer: any;
 
 	private clientApp: express.Application;
-	private clientServer: any;
+	private clientServer: HttpServer.Server | HttpsServer.Server;
 	private clientIO: SocketIO.Server;
 	private clientPort: string | number;
 
@@ -47,11 +47,10 @@ export class ClientServer {
 		this.clientApp.use(cors);
 		this.clientApp.options('*', cors());
 
-		this.initServer().then(() => {
-			this.initSocket();
-			this.listenForClient();
-			this.handleSocketConnections();
-		});
+		this.initServer();
+		this.initSocket();
+		this.listenForClient();
+		this.handleSocketConnections();
 	}
 
 	private initSliders(): void {
@@ -62,21 +61,11 @@ export class ClientServer {
 		});
 	}
 
-	private async initServer() {
+	private initServer(): void {
 		if (process.env.NODE_ENV === 'development') {
-			return import('http').then((httpServer) => {
-				return (this.clientServer = httpServer.createServer(this.clientApp));
-			});
+			this.clientServer = ImportServer.http(this.clientApp);
 		} else {
-			return import('https').then((httpsServer) => {
-				return (this.clientServer = httpsServer.createServer(
-					{
-						key: fs.readFileSync('/home/johnny/.acme.sh/livelyservingitup.site/livelyservingitup.site.key'),
-						cert: fs.readFileSync('/home/johnny/.acme.sh/livelyservingitup.site/livelyservingitup.site.cer'),
-					},
-					this.clientApp,
-				));
-			});
+			this.clientServer = ImportServer.https(this.clientApp);
 		}
 	}
 
