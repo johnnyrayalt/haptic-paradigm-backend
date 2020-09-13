@@ -1,3 +1,4 @@
+import { ImportServer } from 'src/utils/ImportServer';
 import cors from 'cors';
 import express from 'express';
 import { createServer, Server } from 'http';
@@ -24,6 +25,7 @@ export class RemoteServer {
 		this.remoteApp.use(cors());
 		this.remoteApp.options('*', cors());
 		this.remoteServer = createServer(this.remoteApp);
+		this.initServer();
 
 		this.initSocket();
 		this.listenForRemoteServer();
@@ -32,6 +34,14 @@ export class RemoteServer {
 
 	public broadcastMessage(socketEvent: string, message: OSCMessage) {
 		this.remoteIO.emit(socketEvent, message);
+	}
+
+	private initServer(): void {
+		if (process.env.NODE_ENV === 'development') {
+			this.remoteServer = ImportServer.http(this.remoteApp);
+		} else {
+			this.remoteServer = ImportServer.https(this.remoteApp, false);
+		}
 	}
 
 	private initSocket(): void {
