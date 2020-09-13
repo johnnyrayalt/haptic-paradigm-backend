@@ -11,8 +11,8 @@ class ImportServer {
 	public static https = (clientApp: express.Application): https.Server => {
 		return https.createServer(
 			{
-				key: fs.readFileSync(process.env.CLIENT_KEY),
-				cert: fs.readFileSync(process.env.CLIENT_CER),
+				key: fs.readFileSync('/home/johnny/.acme.sh/livelyservingitup.site/livelyservingitup.site.key'),
+				cert: fs.readFileSync('/home/johnny/.acme.sh/livelyservingitup.site/livelyservingitup.site.cer'),
 			},
 			clientApp,
 		);
