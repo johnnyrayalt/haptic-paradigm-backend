@@ -1,9 +1,9 @@
-import { ImportServer } from 'src/utils/ImportServer';
 import cors from 'cors';
 import express from 'express';
 import { createServer, Server } from 'http';
 import moment from 'moment';
 import socketio from 'socket.io';
+import ImportServer from '../utils/ImportServer';
 import { Logger } from '../utils/Logger';
 import { OSCMessage } from '../utils/types';
 import { CONNECT, DISCONNECT, REMOTE_SERVER } from './../utils/constants';
