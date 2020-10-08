@@ -4,19 +4,19 @@ import * as HttpServer from 'http';
 import * as HttpsServer from 'https';
 import socketio from 'socket.io';
 import {
+	buildMessage,
 	CLIENT_SERVER,
 	CONNECT,
 	DISCONNECT,
 	MESSAGE,
 	PING_INTERVAL,
 	PING_TIMEOUT,
-	SLIDER,
 	TIME_LIMIT,
+	XYPAD_DATA,
 } from '../utils/constants';
 import ImportServer from '../utils/ImportServer';
 import { Logger } from '../utils/Logger';
 import { OSCMessage } from '../utils/types';
-import { SLIDER_DATA } from './../utils/constants';
 import { RemoteServer } from './RemoteServer';
 
 export class ClientServer {
@@ -28,7 +28,7 @@ export class ClientServer {
 	private clientIO: SocketIO.Server;
 	private clientPort: string | number;
 
-	private sliderState: { [name: string]: OSCMessage } = {};
+	private uiControllState: { [name: string]: OSCMessage } = {};
 
 	private controlling: string = '';
 	private connectedClients: any = [];
@@ -38,7 +38,7 @@ export class ClientServer {
 	private logger: Logger = new Logger(CLIENT_SERVER);
 
 	constructor(remoteServer: RemoteServer) {
-		this.initSliders();
+		this.initUIControlls();
 
 		this.remoteServer = remoteServer;
 
@@ -53,10 +53,10 @@ export class ClientServer {
 		this.handleSocketConnections();
 	}
 
-	private initSliders(): void {
-		SLIDER_DATA.forEach((data) => {
-			this.sliderState = {
-				[data.address]: SLIDER(data.address, data.value),
+	private initUIControlls(): void {
+		XYPAD_DATA.forEach((data) => {
+			this.uiControllState = {
+				[data.address]: buildMessage(data.address, data.value),
 			};
 		});
 	}
@@ -144,9 +144,9 @@ export class ClientServer {
 			this.logger.broadcast({ message: `Message received: ${JSON.stringify(message, null, 4)}` });
 			this.logger.broadcast({ lineBreak: true });
 
-			for (const slider in this.sliderState) {
-				if (message.address === slider) {
-					this.sliderState[slider] = message;
+			for (const uiControll in this.uiControllState) {
+				if (message.address === uiControll) {
+					this.uiControllState[uiControll] = message;
 				}
 			}
 
@@ -170,7 +170,9 @@ export class ClientServer {
 
 	private assembleOutBoundData(): OSCMessage[] {
 		const outBoundData: OSCMessage[] = [];
-		Object.keys(this.sliderState).forEach((slider: string) => outBoundData.push(this.sliderState[slider]));
+		Object.keys(this.uiControllState).forEach((uiController: string) =>
+			outBoundData.push(this.uiControllState[uiController]),
+		);
 
 		return outBoundData;
 	}

@@ -16,9 +16,7 @@ export const PING_TIMEOUT: number = 10000;
 // Time limit in seconds
 export const TIME_LIMIT: number = 90;
 
-// Sliders
-const SLIDER_NAME: string = 'cube';
-export const SLIDER = (address: string, value: number, name: string = SLIDER_NAME): OSCMessage => ({
+export const buildMessage = (address: string, value: number, name: string = XYPAD_NAME): OSCMessage => ({
 	address: `/${name}/${address}`,
 	args: [
 		{
@@ -28,6 +26,23 @@ export const SLIDER = (address: string, value: number, name: string = SLIDER_NAM
 	],
 });
 
+// XYPAD DATA
+export const XYPAD_NAME: string = 'xypad';
+export const XYPAD_DATA = [
+	{
+		address: 'x',
+		value: 50,
+		displayName: 'X',
+	},
+	{
+		address: 'y',
+		value: 50,
+		displayName: 'Y',
+	},
+];
+
+// Sliders
+const SLIDER_NAME: string = 'cube';
 export const SLIDER_DATA = [
 	{
 		address: 'x',
