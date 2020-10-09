@@ -42,18 +42,10 @@ export const XYPAD_DATA = [
 ];
 
 // Sliders
-const SLIDER_NAME: string = 'cube';
+const SLIDER_NAME: string = 'slider';
 export const SLIDER_DATA = [
 	{
 		address: 'x',
-		value: 50,
-	},
-	{
-		address: 'y',
-		value: 50,
-	},
-	{
-		address: 'z',
-		value: 50,
+		value: 2500,
 	},
 ];
