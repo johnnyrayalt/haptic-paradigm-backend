@@ -5,12 +5,12 @@
     "scripts": {
         "build": "rimraf dist && tsc",
         "start:dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only ./src/server.ts",
-        "start": "CLIENT_PORT=8000 REMOTE_PORT=8001 node dist/server.js",
+        "start": "CLIENT_PORT=9000 REMOTE_PORT=9001 node dist/server.js",
         "docker:build": "docker build -t chloealxandra/esbackend .",
         "docker:run": "docker run -p 8000:8000 -d chloealxandra/esbackend",
         "docker": "npm run docker:build && npm run docker:run"
     },
-    "author": "",
+    "author": "Johnny Ray Alt",
     "license": "ISC",
     "dependencies": {
         "@types/cookie-parser": "1.4.2",
