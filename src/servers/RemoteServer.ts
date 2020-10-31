@@ -3,6 +3,7 @@ import express from 'express';
 import { createServer, Server } from 'http';
 import moment from 'moment';
 import socketio from 'socket.io';
+import ImportServer from '../utils/ImportServer';
 import { Logger } from '../utils/Logger';
 import { OSCMessage } from '../utils/types';
 import { CONNECT, DISCONNECT, REMOTE_SERVER } from './../utils/constants';
@@ -24,6 +25,7 @@ export class RemoteServer {
 		this.remoteApp.use(cors());
 		this.remoteApp.options('*', cors());
 		this.remoteServer = createServer(this.remoteApp);
+		this.initServer();
 
 		this.initSocket();
 		this.listenForRemoteServer();
@@ -32,6 +34,10 @@ export class RemoteServer {
 
 	public broadcastMessage(socketEvent: string, message: OSCMessage) {
 		this.remoteIO.emit(socketEvent, message);
+	}
+
+	private initServer(): void {
+		this.remoteServer = ImportServer.http(this.remoteApp);
 	}
 
 	private initSocket(): void {

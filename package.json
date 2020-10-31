@@ -10,7 +10,7 @@
         "docker:run": "docker run -p 8000:8000 -d chloealxandra/esbackend",
         "docker": "npm run docker:build && npm run docker:run"
     },
-    "author": "",
+    "author": "Johnny Ray Alt",
     "license": "ISC",
     "dependencies": {
         "@types/cookie-parser": "1.4.2",
@@ -24,6 +24,7 @@
         "express": "4.17.1",
         "express-session": "1.17.1",
         "http": "0.0.1-security",
+        "https": "^1.0.0",
         "moment": "2.27.0",
         "node-osc": "5.1.0",
         "nodemon": "2.0.4",
